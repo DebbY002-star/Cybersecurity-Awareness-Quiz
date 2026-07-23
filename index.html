@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cybersecurity Awareness Quiz System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app">
+  <div class="topbar">
+    <div class="dots"><span></span><span></span><span></span></div>
+    <div class="label mono">cyberaware // quiz-system</div>
+  </div>
+
+  <!-- START SCREEN -->
+  <div class="screen" id="start">
+    <div class="eyebrow mono">// system initialized</div>
+    <h1>Cybersecurity Awareness Quiz System</h1>
+    <p class="desc">
+      A short assessment built to measure how well students can spot phishing,
+      protect passwords, and avoid common online threats. Answer each question,
+      get instant feedback, and receive a clearance rating at the end.
+    </p>
+    <div class="meta-row">
+      <div class="meta-item"><b id="meta-total">15</b>Questions</div>
+      <div class="meta-item"><b>~5</b>Minutes</div>
+      <div class="meta-item"><b>Instant</b>Feedback</div>
+    </div>
+    <button class="btn" id="start-btn">▶ Begin Assessment</button>
+  </div>
+
+  <!-- QUIZ SCREEN -->
+  <div class="screen hidden" id="quiz">
+    <div class="scan-track"><div class="scan-fill" id="scan-fill"></div></div>
+    <div class="qhead mono">
+      <span id="q-counter">QUESTION 01 / 15</span>
+      <span id="q-score">SCORE 0</span>
+    </div>
+    <span class="qcat" id="q-category">PASSWORDS</span>
+    <div id="question-text"></div>
+    <div class="options" id="options"></div>
+    <div class="feedback" id="feedback"></div>
+    <div class="nav-row">
+      <button class="btn hidden" id="next-btn">Next Question →</button>
+    </div>
+  </div>
+
+  <!-- RESULTS SCREEN -->
+  <div class="screen hidden" id="results">
+    <div class="verdict-box">
+      <div class="verdict-label mono">ASSESSMENT COMPLETE</div>
+      <div class="score-big mono" id="final-score">0 / 15</div>
+      <div class="verdict-tag mono" id="verdict-tag">CLEARANCE: PENDING</div>
+    </div>
+    <div class="breakdown" id="breakdown"></div>
+    <div class="actions">
+      <button class="btn" id="retry-btn">↻ Retake Assessment</button>
+    </div>
+  </div>
+
+  <footer class="mono">designed for student cybersecurity awareness training</footer>
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
