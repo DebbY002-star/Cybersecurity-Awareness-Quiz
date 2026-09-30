@@ -185,6 +185,33 @@ let current = 0;
 let score = 0;
 let answered = false;
 const answersLog = [];
+let quizOrder = [];
+
+// Fisher-Yates shuffle — returns a new shuffled array, leaves the original untouched
+function shuffleArray(array) {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// Shuffles a question's options too, so the correct answer isn't always in the same position
+function shuffleQuestionOptions(question) {
+  const correctText = question.options[question.correct];
+  const newOptions = shuffleArray(question.options);
+  return {
+    ...question,
+    options: newOptions,
+    correct: newOptions.indexOf(correctText)
+  };
+}
+
+// Builds a freshly randomised question set (order + option order) for a new attempt
+function buildQuizOrder() {
+  return shuffleArray(questions).map(shuffleQuestionOptions);
+}
 
 const startBtn = document.getElementById('start-btn');
 const nextBtn = document.getElementById('next-btn');
@@ -197,12 +224,14 @@ const resultsScreen = document.getElementById('results');
 document.getElementById('meta-total').textContent = questions.length;
 
 startBtn.addEventListener('click', () => {
+  quizOrder = buildQuizOrder();
   startScreen.classList.add('hidden');
   quizScreen.classList.remove('hidden');
   renderQuestion();
 });
 
 retryBtn.addEventListener('click', () => {
+  quizOrder = buildQuizOrder();
   current = 0;
   score = 0;
   answered = false;
@@ -214,7 +243,7 @@ retryBtn.addEventListener('click', () => {
 
 nextBtn.addEventListener('click', () => {
   current++;
-  if (current < questions.length) {
+  if (current < quizOrder.length) {
     renderQuestion();
   } else {
     renderResults();
@@ -223,10 +252,10 @@ nextBtn.addEventListener('click', () => {
 
 function renderQuestion(){
   answered = false;
-  const item = questions[current];
-  document.getElementById('scan-fill').style.width = ((current) / questions.length * 100) + '%';
+  const item = quizOrder[current];
+  document.getElementById('scan-fill').style.width = ((current) / quizOrder.length * 100) + '%';
   document.getElementById('q-counter').textContent =
-    `QUESTION ${String(current+1).padStart(2,'0')} / ${questions.length}`;
+    `QUESTION ${String(current+1).padStart(2,'0')} / ${quizOrder.length}`;
   document.getElementById('q-score').textContent = `SCORE ${score}`;
   document.getElementById('q-category').textContent = item.category.toUpperCase();
   document.getElementById('question-text').textContent = item.q;
@@ -250,7 +279,7 @@ function renderQuestion(){
 function selectAnswer(idx){
   if (answered) return;
   answered = true;
-  const item = questions[current];
+  const item = quizOrder[current];
   const options = document.querySelectorAll('.option');
   options.forEach(o => o.setAttribute('disabled', 'true'));
 
@@ -266,9 +295,9 @@ function selectAnswer(idx){
   feedback.classList.add('show');
 
   document.getElementById('q-score').textContent = `SCORE ${score}`;
-  document.getElementById('scan-fill').style.width = ((current+1) / questions.length * 100) + '%';
+  document.getElementById('scan-fill').style.width = ((current+1) / quizOrder.length * 100) + '%';
 
-  nextBtn.textContent = (current === questions.length - 1) ? 'See Results →' : 'Next Question →';
+  nextBtn.textContent = (current === quizOrder.length - 1) ? 'See Results →' : 'Next Question →';
   nextBtn.classList.remove('hidden');
 }
 
@@ -276,7 +305,7 @@ function renderResults(){
   quizScreen.classList.add('hidden');
   resultsScreen.classList.remove('hidden');
 
-  const total = questions.length;
+  const total = quizOrder.length;
   const pct = Math.round((score / total) * 100);
   document.getElementById('final-score').textContent = `${score} / ${total}`;
 
