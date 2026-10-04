@@ -1,6 +1,7 @@
 const questions = [
   {
     category: "Passwords",
+    difficulty: "Beginner",
     q: "Which of these is the strongest password?",
     options: [
       "password123",
@@ -13,6 +14,7 @@ const questions = [
   },
   {
     category: "Phishing",
+    difficulty: "Beginner",
     q: "You receive an email saying 'Your account will be suspended, click here to verify now.' What should you do?",
     options: [
       "Click the link immediately to avoid losing access",
@@ -25,6 +27,7 @@ const questions = [
   },
   {
     category: "Malware",
+    difficulty: "Beginner",
     q: "What is the safest way to get new software or apps?",
     options: [
       "Download from any website that appears in search results",
@@ -37,6 +40,7 @@ const questions = [
   },
   {
     category: "Social Engineering",
+    difficulty: "Intermediate",
     q: "A caller claims to be from your bank's IT department and asks for your PIN to 'fix an issue.' What's the right response?",
     options: [
       "Give the PIN since they said it's urgent",
@@ -49,6 +53,7 @@ const questions = [
   },
   {
     category: "Wi-Fi Safety",
+    difficulty: "Intermediate",
     q: "Which of these is the biggest risk when using free public Wi-Fi?",
     options: [
       "Slower internet speed",
@@ -61,6 +66,7 @@ const questions = [
   },
   {
     category: "Two-Factor Authentication",
+    difficulty: "Intermediate",
     q: "Why is two-factor authentication (2FA) recommended?",
     options: [
       "It makes login slower on purpose",
@@ -73,6 +79,7 @@ const questions = [
   },
   {
     category: "Social Media",
+    difficulty: "Beginner",
     q: "What's a safe social media habit?",
     options: [
       "Posting your live location in real time",
@@ -85,6 +92,7 @@ const questions = [
   },
   {
     category: "Malware",
+    difficulty: "Intermediate",
     q: "You plug in a USB drive you found in the school car park. What's the safest action?",
     options: [
       "Plug it into your laptop to see what's on it",
@@ -97,6 +105,7 @@ const questions = [
   },
   {
     category: "Passwords",
+    difficulty: "Beginner",
     q: "How often should you reuse the same password across multiple accounts?",
     options: [
       "It's fine as long as the password is strong",
@@ -109,6 +118,7 @@ const questions = [
   },
   {
     category: "Phishing",
+    difficulty: "Intermediate",
     q: "Which sign most strongly suggests an email might be a phishing attempt?",
     options: [
       "It was sent during work hours",
@@ -121,6 +131,7 @@ const questions = [
   },
   {
     category: "Data Protection",
+    difficulty: "Intermediate",
     q: "Before disposing of an old phone or laptop, you should:",
     options: [
       "Just delete the visible files",
@@ -133,6 +144,7 @@ const questions = [
   },
   {
     category: "Software Updates",
+    difficulty: "Beginner",
     q: "Why should you install software and OS updates promptly?",
     options: [
       "Updates are only for adding new features",
@@ -145,6 +157,7 @@ const questions = [
   },
   {
     category: "Social Engineering",
+    difficulty: "Intermediate",
     q: "A 'friend' messages you urgently asking for money via an unusual payment method, and their account seems slightly different. This is likely:",
     options: [
       "A normal request you should fulfil quickly",
@@ -157,6 +170,7 @@ const questions = [
   },
   {
     category: "Browsing Safety",
+    difficulty: "Intermediate",
     q: "What does the padlock icon and 'https' in a browser address bar indicate?",
     options: [
       "The website is guaranteed to be trustworthy",
@@ -169,6 +183,7 @@ const questions = [
   },
   {
     category: "Incident Response",
+    difficulty: "Beginner",
     q: "If you suspect your account has been hacked, your first step should be:",
     options: [
       "Wait a few days to see what happens",
@@ -181,11 +196,31 @@ const questions = [
   }
 ];
 
+// ---------- Topic groups (five quiz categories shown to the student) ----------
+const GROUPS = {
+  "Password Security": ["Passwords", "Two-Factor Authentication"],
+  "Phishing & Email Safety": ["Phishing"],
+  "Malware Awareness": ["Malware", "Software Updates"],
+  "Social Engineering": ["Social Engineering", "Social Media"],
+  "Safe Browsing": ["Browsing Safety", "Wi-Fi Safety", "Data Protection", "Incident Response"]
+};
+
 let current = 0;
 let score = 0;
 let answered = false;
 const answersLog = [];
 let quizOrder = [];
+let selectedTopic = null;   // "All" or a key of GROUPS
+let selectedLevel = null;   // "All", "Beginner" or "Intermediate"
+
+// ---------- Timer settings ----------
+const TIME_PER_QUESTION = 15; // seconds
+let timeLeft = TIME_PER_QUESTION;
+let timerId = null;
+let advanceId = null;
+
+// ---------- Local storage settings ----------
+const STORAGE_KEY = 'cyberQuizHistory';
 
 // Fisher-Yates shuffle — returns a new shuffled array, leaves the original untouched
 function shuffleArray(array) {
@@ -208,47 +243,190 @@ function shuffleQuestionOptions(question) {
   };
 }
 
-// Builds a freshly randomised question set (order + option order) for a new attempt
-function buildQuizOrder() {
-  return shuffleArray(questions).map(shuffleQuestionOptions);
+// Returns the questions that match the chosen topic and difficulty
+function getQuestionPool() {
+  return questions.filter(q =>
+    (selectedTopic === 'All' || GROUPS[selectedTopic].includes(q.category)) &&
+    (selectedLevel === 'All' || q.difficulty === selectedLevel)
+  );
 }
 
+// Builds a freshly randomised question set (order + option order) for a new attempt
+function buildQuizOrder() {
+  return shuffleArray(getQuestionPool()).map(shuffleQuestionOptions);
+}
+
+// ---------- Screens and buttons ----------
 const startBtn = document.getElementById('start-btn');
 const nextBtn = document.getElementById('next-btn');
 const retryBtn = document.getElementById('retry-btn');
+const categoryBtn = document.getElementById('category-btn');
 
 const startScreen = document.getElementById('start');
 const quizScreen = document.getElementById('quiz');
 const resultsScreen = document.getElementById('results');
 
-document.getElementById('meta-total').textContent = questions.length;
+// ---------- Topic and difficulty selection ----------
+function setActive(containerId, btn) {
+  document.querySelectorAll(`#${containerId} .chip`).forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+}
 
-startBtn.addEventListener('click', () => {
-  quizOrder = buildQuizOrder();
-  startScreen.classList.add('hidden');
-  quizScreen.classList.remove('hidden');
-  renderQuestion();
+function updatePicker() {
+  const ready = selectedTopic && selectedLevel;
+  const count = ready ? getQuestionPool().length : questions.length;
+  document.getElementById('meta-total').textContent = count;
+  document.getElementById('meta-min').textContent = '~' + Math.max(1, Math.ceil(count * TIME_PER_QUESTION / 60));
+  const note = document.getElementById('pick-note');
+  if (ready && count === 0) {
+    note.textContent = 'No questions match this choice. Try another difficulty.';
+  } else {
+    note.textContent = ready ? '' : 'Choose a topic and a difficulty to begin.';
+  }
+  startBtn.disabled = !ready || count === 0;
+}
+
+document.querySelectorAll('#topic-chips .chip').forEach(b => {
+  b.addEventListener('click', () => {
+    selectedTopic = b.dataset.value;
+    setActive('topic-chips', b);
+    updatePicker();
+  });
 });
 
-retryBtn.addEventListener('click', () => {
+document.querySelectorAll('#level-chips .chip').forEach(b => {
+  b.addEventListener('click', () => {
+    selectedLevel = b.dataset.value;
+    setActive('level-chips', b);
+    updatePicker();
+  });
+});
+
+// ---------- Timer functions ----------
+function updateTimerDisplay() {
+  const el = document.getElementById('q-timer');
+  el.textContent = `TIME ${String(timeLeft).padStart(2, '0')}s`;
+  el.classList.toggle('low', timeLeft <= 5);
+}
+
+function startTimer() {
+  clearInterval(timerId);
+  timeLeft = TIME_PER_QUESTION;
+  updateTimerDisplay();
+  timerId = setInterval(() => {
+    timeLeft--;
+    updateTimerDisplay();
+    if (timeLeft <= 0) {
+      clearInterval(timerId);
+      timeUp();
+    }
+  }, 1000);
+}
+
+// Called when the countdown reaches zero without an answer:
+// marks the question wrong, shows the correct answer, then moves on automatically
+function timeUp() {
+  if (answered) return;
+  answered = true;
+  const item = quizOrder[current];
+  const options = document.querySelectorAll('.option');
+  options.forEach(o => o.setAttribute('disabled', 'true'));
+
+  answersLog.push({ category: item.category, correct: false });
+  options[item.correct].classList.add('correct');
+
+  const feedback = document.getElementById('feedback');
+  feedback.innerHTML = `<b>Time's up.</b> ${item.explain}`;
+  feedback.classList.add('show');
+
+  document.getElementById('scan-fill').style.width = ((current + 1) / quizOrder.length * 100) + '%';
+
+  advanceId = setTimeout(goNext, 3000);
+}
+
+// ---------- Local storage functions ----------
+function loadHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { attempts: [], best: 0 };
+  } catch (e) {
+    return { attempts: [], best: 0 };
+  }
+}
+
+function saveAttempt(scoreValue, total) {
+  const history = loadHistory();
+  const pct = Math.round((scoreValue / total) * 100);
+  history.attempts.unshift({
+    attemptId: Date.now(),
+    category: selectedTopic === 'All' ? 'All Topics' : selectedTopic,
+    difficulty: selectedLevel === 'All' ? 'All Levels' : selectedLevel,
+    score: scoreValue,
+    totalQuestions: total,
+    dateTaken: new Date().toISOString()
+  });
+  history.attempts = history.attempts.slice(0, 5); // keep the last 5 attempts
+  history.best = Math.max(history.best, pct);      // best score as a percentage
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+  } catch (e) {}
+  return history;
+}
+
+function showHistory(el) {
+  const h = loadHistory();
+  if (!h.attempts.length) {
+    el.innerHTML = '';
+    return;
+  }
+  el.innerHTML = `<div class="hist-title mono">// best score: ${h.best}% · recent attempts</div>` +
+    h.attempts.map(a =>
+      `<div class="row"><span>${new Date(a.dateTaken).toLocaleDateString()} · ${a.category}</span><b>${a.score} / ${a.totalQuestions}</b></div>`
+    ).join('');
+}
+
+// ---------- Quiz flow ----------
+function startQuiz() {
   quizOrder = buildQuizOrder();
   current = 0;
   score = 0;
   answered = false;
   answersLog.length = 0;
+  startScreen.classList.add('hidden');
   resultsScreen.classList.add('hidden');
   quizScreen.classList.remove('hidden');
-  renderQuestion();
+  loadQuestion();
+}
+
+startBtn.addEventListener('click', startQuiz);
+retryBtn.addEventListener('click', startQuiz);
+
+categoryBtn.addEventListener('click', () => {
+  clearInterval(timerId);
+  clearTimeout(advanceId);
+  resultsScreen.classList.add('hidden');
+  startScreen.classList.remove('hidden');
+  showHistory(document.getElementById('history-start'));
 });
 
-nextBtn.addEventListener('click', () => {
+function goNext() {
+  clearTimeout(advanceId);
   current++;
   if (current < quizOrder.length) {
-    renderQuestion();
+    loadQuestion();
   } else {
     renderResults();
   }
-});
+}
+
+nextBtn.addEventListener('click', goNext);
+
+// Clears any running timer, shows the question, then starts a fresh countdown
+function loadQuestion() {
+  clearInterval(timerId);
+  clearTimeout(advanceId);
+  renderQuestion();
+  startTimer();
+}
 
 function renderQuestion(){
   answered = false;
@@ -279,6 +457,8 @@ function renderQuestion(){
 function selectAnswer(idx){
   if (answered) return;
   answered = true;
+  clearInterval(timerId);
+
   const item = quizOrder[current];
   const options = document.querySelectorAll('.option');
   options.forEach(o => o.setAttribute('disabled', 'true'));
@@ -302,6 +482,8 @@ function selectAnswer(idx){
 }
 
 function renderResults(){
+  clearInterval(timerId);
+  clearTimeout(advanceId);
   quizScreen.classList.add('hidden');
   resultsScreen.classList.remove('hidden');
 
@@ -345,4 +527,12 @@ function renderResults(){
     row.innerHTML = `<span>${cat}</span><b>${d.correct} / ${d.total}</b>`;
     breakdown.appendChild(row);
   });
+
+  // save this attempt and show best score + recent attempts
+  saveAttempt(score, total);
+  showHistory(document.getElementById('history-results'));
 }
+
+// ---------- Initial state ----------
+updatePicker();
+showHistory(document.getElementById('history-start'));

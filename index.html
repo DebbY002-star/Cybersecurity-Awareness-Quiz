@@ -23,15 +23,36 @@
     <h1>Cybersecurity Awareness Quiz System</h1>
     <p class="desc">
       A short assessment built to measure how well students can spot phishing,
-      protect passwords, and avoid common online threats. Answer each question,
-      get instant feedback, and receive a clearance rating at the end.
+      protect passwords, and avoid common online threats. Choose a topic and
+      difficulty, get instant feedback, and receive a clearance rating at the end.
     </p>
+
+    <div class="picker-label mono">// choose topic</div>
+    <div class="chips" id="topic-chips">
+      <button class="chip" data-value="All">All Topics</button>
+      <button class="chip" data-value="Password Security">Password Security</button>
+      <button class="chip" data-value="Phishing &amp; Email Safety">Phishing &amp; Email Safety</button>
+      <button class="chip" data-value="Malware Awareness">Malware Awareness</button>
+      <button class="chip" data-value="Social Engineering">Social Engineering</button>
+      <button class="chip" data-value="Safe Browsing">Safe Browsing</button>
+    </div>
+
+    <div class="picker-label mono">// choose difficulty</div>
+    <div class="chips" id="level-chips">
+      <button class="chip" data-value="All">All Levels</button>
+      <button class="chip" data-value="Beginner">Beginner</button>
+      <button class="chip" data-value="Intermediate">Intermediate</button>
+    </div>
+
     <div class="meta-row">
       <div class="meta-item"><b id="meta-total">15</b>Questions</div>
-      <div class="meta-item"><b>~5</b>Minutes</div>
+      <div class="meta-item"><b id="meta-min">~4</b>Minutes</div>
+      <div class="meta-item"><b>15s</b>Per question</div>
       <div class="meta-item"><b>Instant</b>Feedback</div>
     </div>
-    <button class="btn" id="start-btn">▶ Begin Assessment</button>
+    <div class="pick-note mono" id="pick-note"></div>
+    <button class="btn" id="start-btn" disabled>▶ Begin Assessment</button>
+    <div class="history" id="history-start"></div>
   </div>
 
   <!-- QUIZ SCREEN -->
@@ -39,6 +60,7 @@
     <div class="scan-track"><div class="scan-fill" id="scan-fill"></div></div>
     <div class="qhead mono">
       <span id="q-counter">QUESTION 01 / 15</span>
+      <span id="q-timer">TIME 15s</span>
       <span id="q-score">SCORE 0</span>
     </div>
     <span class="qcat" id="q-category">PASSWORDS</span>
@@ -58,8 +80,10 @@
       <div class="verdict-tag mono" id="verdict-tag">CLEARANCE: PENDING</div>
     </div>
     <div class="breakdown" id="breakdown"></div>
+    <div class="history" id="history-results"></div>
     <div class="actions">
       <button class="btn" id="retry-btn">↻ Retake Assessment</button>
+      <button class="btn ghost" id="category-btn">Choose Another Category</button>
     </div>
   </div>
 
